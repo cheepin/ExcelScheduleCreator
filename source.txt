@@ -1,0 +1,187 @@
+Const Holi_Max As Integer = 90
+Public Const Holi_Year As Integer = 2
+Dim mHolydays(Holi_Max, 2) As String
+
+'スタート年月日宣言
+Dim myDate As Date
+Dim holi_Count As Integer
+
+
+
+
+
+
+Public Sub スケジュール表描画(ByVal orgDate As Date, ByVal distDate As Date, ByVal schedule_Width As Integer, ByVal myColor As Long)
+
+
+
+'旧コード-------------------------------
+
+'A1セルに日付を入力
+'Range("A1").Value = "2009/8/26"
+'表示形式変更
+'Range("A1").NumberFormatLocal = "m/d(aaa)"
+'オートフィルで連続した月日・曜日を入力
+'Range("A1").AutoFill Destination:=Range("A1:A32"), Type:=xlFillSeries
+
+'---------------------------------------
+
+
+'新コード-------------------------------
+
+
+
+'定数宣言
+Const Month_Width As Integer = 3
+Const Day_Width As Integer = 3
+Const Weekday_Width As Integer = 3
+Const Schdl_Offset As Integer = 3
+Const Base_Address As String = "A2"
+Const Day_Offset As Integer = 1
+Const Weekday_Offset As Integer = 2
+Const Schedule_Offset As Integer = 3
+Const Schedule_Days As Integer = 32
+Const First_Day As Integer = 1
+Const year_offset As Integer = -1
+
+
+
+'新規ブック追加
+Workbooks.Add
+
+
+
+'起点セル設定
+Dim baseCell As Range
+Set baseCell = Range(Base_Address)
+
+myDate = orgDate
+
+
+'祝日データを読み込み
+Call 祝日データ読み込み
+
+
+'年を上部に表示
+baseCell.Offset(year_offset, 0) = Year(myDate)
+
+'A1をアクティベートセルに
+Range(Base_Address).Activate
+
+'ループ内用変数宣言
+Dim myDay As Integer
+Dim myWeekDay As Integer
+
+
+'ループ回し
+Do Until myDate > distDate
+    With ActiveCell
+    
+        myDay = Day(myDate)
+        myWeekDay = Weekday(myDate)
+    
+        '月の変わり目だけ表示を変える
+        If myDay = First_Day Or .Row = baseCell.Row Then
+            .Value = Month(myDate)
+            
+        End If
+
+        
+        '罫線
+        With Range(.Offset(0, Day_Offset), .Offset(0, Schedule_Offset))
+            .Borders.Weight = xlThin
+        
+            '土日祝日の色付け
+            If myWeekDay = vbSaturday Or myWeekDay = vbSunday Then
+               .Interior.Color = myColor
+            End If
+        
+        '-----------祝日データ判定---------------
+
+        Dim count As Integer
+        
+        For count = 1 To holi_Count - 1
+            If myDate = mHolydays(count, 1) Then
+                .Interior.Color = myColor
+                ActiveCell.Offset(0, Schedule_Offset).Value = mHolydays(count, 2)
+            End If
+        Next
+
+        End With
+        
+                            
+        .Offset(0, Day_Offset).Value = myDay
+        .Offset(0, Weekday_Offset).Value = WeekdayName(myWeekDay, True)
+        .Offset(1, 0).Activate
+        
+        
+    End With
+    
+    myDate = DateAdd("d", 1, myDate)
+
+Loop
+
+'スケジュールレンジを取得
+Dim tableArea As Range
+Set tableArea = ActiveSheet.UsedRange
+tableArea.BorderAround Weight:=xlThick
+
+'Set tableArea = Range(baseCell, baseCell.Offset(Schedule_Days, Schdl_Offset))
+
+
+'格子状の罫線を引く
+'tableArea.Offset(0, 1).Resize(, tableArea.Columns.Count - 1).Borders.Weight = xlThin
+'tableArea.Offset(0, 1).Resize(, tableArea.Columns.Count - 1).BorderAround Weight:=xlThick
+'周囲に太線を引く
+
+
+
+
+
+
+'カラムの幅を変更
+With baseCell
+    .ColumnWidth = Mouth_Width
+    .Offset(0, Base_Offset).ColumnWidth = Day_Width
+    .Offset(0, Weekday_Offset).ColumnWidth = Weekday_Width
+    .Offset(0, Schedule_Offset).ColumnWidth = schedule_Width
+
+End With
+
+End Sub
+
+
+
+Public Sub 祝日データ読み込み()
+
+Const holydayNum As Integer = 90
+
+
+Dim index As Integer
+index = 1
+
+
+'-----------祝日データ読み込み-----------
+
+Open ThisWorkbook.Path & "\syukujitsu.csv" For Input As #1
+
+    Do Until EOF(1)
+        Input #1, mHolydays(index, 1), mHolydays(index, 2)
+        index = index + 1
+    Loop
+    holi_Count = index
+Close #1
+
+End Sub
+
+
+
+Public Sub 祝日判定()
+
+'Workbooks.OpenText Filename:="C:\Users\fujit\Documents\Excel_Project\ScheduleCreator\syukujitsu.csv", DataType:=xlDelimited, Comma:=True
+
+
+
+
+End Sub
+
